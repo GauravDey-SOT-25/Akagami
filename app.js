@@ -804,9 +804,11 @@ const Parser = (() => {
     const rid = String(row[idx('receiver_id')]   ||'').trim();
     if (!tid||!sid||!rid) return null;
     
+    // Fix: Strip currency symbols and commas before parsing
     const rawAmt = String(row[idx('amount')]||'').replace(/[^0-9.-]/g, '');
     const amount = parseFloat(rawAmt);
     
+    // Fix: Handle "YYYY-MM-DD HH:MM:SS" strictly across all browsers
     let dateStr = String(row[idx('timestamp')]||'').trim();
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
         dateStr = dateStr.replace(' ', 'T'); 
@@ -856,14 +858,13 @@ const GraphBuilder = (() => {
 
 // ── Detection Engine ──
 const DetectionEngine = (() => {
-  // Tuned thresholds to eliminate background noise and false positives
-  const MS_72H=72*60*60*1000, FAN_THRESHOLD=20, SHELL_CHAIN_LEN=5, SHELL_MAX_TXN=2, VELOCITY_THRESHOLD=20;
-  const SCORE_CYCLE=50, SCORE_FAN=30, SCORE_SHELL=20, SCORE_VELOCITY=10;
+  const MS_72H=72*60*60*1000,FAN_THRESHOLD=10,SHELL_CHAIN_LEN=3,SHELL_MAX_TXN=3,VELOCITY_THRESHOLD=5;
+  const SCORE_CYCLE=50,SCORE_FAN=30,SCORE_SHELL=20,SCORE_VELOCITY=10;
 
   function detectCycles(nodes, adjOut) {
     const cycles = [], accountPatterns = new Map();
     const uniqueCycles = new Set();
-    const MAX_DEPTH = 4; // Restrict search depth to prevent exponential accidental cycles
+    const MAX_DEPTH = 5;
 
     for (const startNode of nodes.keys()) {
       function dfs(curr, path, visitedSet) {
@@ -949,16 +950,12 @@ const DetectionEngine = (() => {
     function addScore(acc,pts,pat) { rawScores.set(acc,(rawScores.get(acc)||0)+pts); if(!patternsMap.has(acc)) patternsMap.set(acc,new Set()); patternsMap.get(acc).add(pat); }
     for (const [acc,pats] of cycleResult.accountPatterns) for (const p of pats) addScore(acc,SCORE_CYCLE,p);
     for (const [acc,pats] of fanResult.fanAccounts)       for (const p of pats) addScore(acc,SCORE_FAN,p);
-    for (const acc of shellResult.shellAccounts)          addScore(acc,SCORE_SHELL,'shell_network');
-    for (const acc of velocityResult.velocityAccounts)    addScore(acc,SCORE_VELOCITY,'high_velocity');
-    
+    for (const acc of shellResult.shellAccounts)       addScore(acc,SCORE_SHELL,'shell_network');
+    for (const acc of velocityResult.velocityAccounts) addScore(acc,SCORE_VELOCITY,'high_velocity');
     const maxRaw=Math.max(...rawScores.values(),1);
     const suspicious=[];
-    for (const [acc,raw] of rawScores) {
-      // Require a strong signal to filter out accidental background patterns
-      if (raw < 40) continue;
+    for (const [acc,raw] of rawScores)
       suspicious.push({ account_id:acc, suspicion_score:Math.min(100,Math.round((raw/maxRaw)*1000)/10), detected_patterns:[...patternsMap.get(acc)], raw_score:raw });
-    }
     suspicious.sort((a,b)=>b.suspicion_score-a.suspicion_score);
     return suspicious;
   }
@@ -969,19 +966,16 @@ const DetectionEngine = (() => {
     function find(x){ if(!parent.has(x)) parent.set(x,x); if(parent.get(x)!==x) parent.set(x,find(parent.get(x))); return parent.get(x); }
     function union(x,y){ const px=find(x),py=find(y); if(px!==py) parent.set(px,py); }
     for (const acc of suspSet) find(acc);
-    for (const cycle of cycleResult.cycles) {
-        for (let i=1;i<cycle.length;i++) {
-            if(suspSet.has(cycle[0])&&suspSet.has(cycle[i])) union(cycle[0],cycle[i]);
-        }
+    for (const cycle of cycleResult.cycles) for (let i=1;i<cycle.length;i++) if(suspSet.has(cycle[0])&&suspSet.has(cycle[i])) union(cycle[0],cycle[i]);
+    for (const acc of suspSet) {
+      for (const nb of (adjOut.get(acc)||new Set())) if(suspSet.has(nb)) union(acc,nb);
+      for (const nb of (adjIn.get(acc) ||new Set())) if(suspSet.has(nb)) union(acc,nb);
     }
-    
-    // Removed general adjacency merging to prevent distinct rings from combining purely by overlapping counterparties
-    
     const groups=new Map();
     for (const acc of suspSet){ const r=find(acc); if(!groups.has(r)) groups.set(r,[]); groups.get(r).push(acc); }
     const rings=[]; let rn=1;
     for (const [,members] of groups) {
-      if (members.length<3) continue; // Rings must contain at least 3 members
+      if (members.length<2) continue;
       const ringId=`RING_${String(rn).padStart(3,'0')}`;
       const pc={};
       for (const acc of members){ const s=suspicious.find(s=>s.account_id===acc); if(s) for(const p of s.detected_patterns) pc[p]=(pc[p]||0)+1; }
@@ -1136,6 +1130,7 @@ function initDateSearchBar(allTransactions) {
   document.querySelectorAll('.dsb-quick').forEach(b => b.classList.remove('active'));
 
   // ── Quick range buttons ──
+  // KEY FIX: anchor to dataMaxTs (latest date in dataset), not new Date()
   document.querySelectorAll('.dsb-quick').forEach(btn => {
     const fresh = btn.cloneNode(true);
     btn.parentNode.replaceChild(fresh, btn);
