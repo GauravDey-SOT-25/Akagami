@@ -690,7 +690,7 @@ function generateSampleCSV() {
   function addTxn(s, r, amount, offset = 0) {
     const ts = new Date(now - offset);
     const pad = n => String(n).padStart(2,'0');
-    rows.push(`TXN_${String(tid++).padStart(6,'0')},${s},${r},${amount.toFixed(2)},${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`);
+    rows.push(`TXN_${String(tid++).padStart(6,'0')},${s},${r},${amount.toFixed(2)},${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())}T${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`);
   }
   addTxn('ACC_00001','ACC_00002',5000,7200000); addTxn('ACC_00002','ACC_00003',4800,6900000); addTxn('ACC_00003','ACC_00001',4600,6600000);
   addTxn('ACC_00004','ACC_00005',10000,5000000); addTxn('ACC_00005','ACC_00006',9500,4800000); addTxn('ACC_00006','ACC_00007',9000,4600000); addTxn('ACC_00007','ACC_00004',8500,4400000);
@@ -803,8 +803,16 @@ const Parser = (() => {
     const sid = String(row[idx('sender_id')]     ||'').trim();
     const rid = String(row[idx('receiver_id')]   ||'').trim();
     if (!tid||!sid||!rid) return null;
-    const amount    = parseFloat(row[idx('amount')]);
-    const timestamp = new Date(String(row[idx('timestamp')]||'').trim()).getTime();
+    
+    const rawAmt = String(row[idx('amount')]||'').replace(/[^0-9.-]/g, '');
+    const amount = parseFloat(rawAmt);
+    
+    let dateStr = String(row[idx('timestamp')]||'').trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
+        dateStr = dateStr.replace(' ', 'T'); 
+    }
+    const timestamp = new Date(dateStr).getTime();
+    
     if (isNaN(amount)||amount<0||isNaN(timestamp)) return null;
     return { transaction_id:tid, sender_id:sid, receiver_id:rid, amount, timestamp };
   }
@@ -848,27 +856,41 @@ const GraphBuilder = (() => {
 
 // ── Detection Engine ──
 const DetectionEngine = (() => {
-  const MS_72H=72*60*60*1000,FAN_THRESHOLD=10,SHELL_CHAIN_LEN=3,SHELL_MAX_TXN=3,VELOCITY_THRESHOLD=5;
-  const SCORE_CYCLE=50,SCORE_FAN=30,SCORE_SHELL=20,SCORE_VELOCITY=10;
+  // Tuned thresholds to eliminate background noise and false positives
+  const MS_72H=72*60*60*1000, FAN_THRESHOLD=20, SHELL_CHAIN_LEN=5, SHELL_MAX_TXN=2, VELOCITY_THRESHOLD=20;
+  const SCORE_CYCLE=50, SCORE_FAN=30, SCORE_SHELL=20, SCORE_VELOCITY=10;
 
-  function detectCycles(nodes,adjOut) {
-    const cycles=[],visited=new Set(),recStack=new Set(),path=[],accountPatterns=new Map();
-    function dfs(node) {
-      visited.add(node); recStack.add(node); path.push(node);
-      for (const nb of (adjOut.get(node)||new Set())) {
-        if (!visited.has(nb)) dfs(nb);
-        else if (recStack.has(nb)) {
-          const cycle=path.slice(path.indexOf(nb));
-          if (cycle.length>=3&&cycle.length<=5) {
-            cycles.push([...cycle]);
-            cycle.forEach(acc=>{ if(!accountPatterns.has(acc)) accountPatterns.set(acc,new Set()); accountPatterns.get(acc).add(`cycle_length_${cycle.length}`); });
+  function detectCycles(nodes, adjOut) {
+    const cycles = [], accountPatterns = new Map();
+    const uniqueCycles = new Set();
+    const MAX_DEPTH = 4; // Restrict search depth to prevent exponential accidental cycles
+
+    for (const startNode of nodes.keys()) {
+      function dfs(curr, path, visitedSet) {
+        if (path.length > MAX_DEPTH) return;
+        for (const nb of (adjOut.get(curr) || new Set())) {
+          if (nb === startNode && path.length >= 3) {
+            const cycleStr = [...path].sort().join('|');
+            if (!uniqueCycles.has(cycleStr)) {
+              uniqueCycles.add(cycleStr);
+              cycles.push([...path]);
+              path.forEach(acc => {
+                if (!accountPatterns.has(acc)) accountPatterns.set(acc, new Set());
+                accountPatterns.get(acc).add(`cycle_length_${path.length}`);
+              });
+            }
+          } else if (!visitedSet.has(nb)) {
+            visitedSet.add(nb);
+            path.push(nb);
+            dfs(nb, path, visitedSet);
+            path.pop();
+            visitedSet.delete(nb);
           }
         }
       }
-      path.pop(); recStack.delete(node);
+      dfs(startNode, [startNode], new Set([startNode]));
     }
-    for (const id of nodes.keys()) if (!visited.has(id)) dfs(id);
-    return { cycleAccounts:new Set(accountPatterns.keys()), cycles, accountPatterns };
+    return { cycleAccounts: new Set(accountPatterns.keys()), cycles, accountPatterns };
   }
 
   function detectFanPatterns(nodes) {
@@ -902,7 +924,9 @@ const DetectionEngine = (() => {
         vis.delete(next);
       }
     }
-    for (const [id,node] of nodes) if (node.txnCount>SHELL_MAX_TXN) findChain(id,1,new Set([id]));
+    for (const [id,node] of nodes) {
+        if (node.txnCount <= SHELL_MAX_TXN) findChain(id,1,new Set([id]));
+    }
     return {shellAccounts};
   }
 
@@ -925,12 +949,16 @@ const DetectionEngine = (() => {
     function addScore(acc,pts,pat) { rawScores.set(acc,(rawScores.get(acc)||0)+pts); if(!patternsMap.has(acc)) patternsMap.set(acc,new Set()); patternsMap.get(acc).add(pat); }
     for (const [acc,pats] of cycleResult.accountPatterns) for (const p of pats) addScore(acc,SCORE_CYCLE,p);
     for (const [acc,pats] of fanResult.fanAccounts)       for (const p of pats) addScore(acc,SCORE_FAN,p);
-    for (const acc of shellResult.shellAccounts)       addScore(acc,SCORE_SHELL,'shell_network');
-    for (const acc of velocityResult.velocityAccounts) addScore(acc,SCORE_VELOCITY,'high_velocity');
+    for (const acc of shellResult.shellAccounts)          addScore(acc,SCORE_SHELL,'shell_network');
+    for (const acc of velocityResult.velocityAccounts)    addScore(acc,SCORE_VELOCITY,'high_velocity');
+    
     const maxRaw=Math.max(...rawScores.values(),1);
     const suspicious=[];
-    for (const [acc,raw] of rawScores)
+    for (const [acc,raw] of rawScores) {
+      // Require a strong signal to filter out accidental background patterns
+      if (raw < 40) continue;
       suspicious.push({ account_id:acc, suspicion_score:Math.min(100,Math.round((raw/maxRaw)*1000)/10), detected_patterns:[...patternsMap.get(acc)], raw_score:raw });
+    }
     suspicious.sort((a,b)=>b.suspicion_score-a.suspicion_score);
     return suspicious;
   }
@@ -941,16 +969,19 @@ const DetectionEngine = (() => {
     function find(x){ if(!parent.has(x)) parent.set(x,x); if(parent.get(x)!==x) parent.set(x,find(parent.get(x))); return parent.get(x); }
     function union(x,y){ const px=find(x),py=find(y); if(px!==py) parent.set(px,py); }
     for (const acc of suspSet) find(acc);
-    for (const cycle of cycleResult.cycles) for (let i=1;i<cycle.length;i++) if(suspSet.has(cycle[0])&&suspSet.has(cycle[i])) union(cycle[0],cycle[i]);
-    for (const acc of suspSet) {
-      for (const nb of (adjOut.get(acc)||new Set())) if(suspSet.has(nb)) union(acc,nb);
-      for (const nb of (adjIn.get(acc) ||new Set())) if(suspSet.has(nb)) union(acc,nb);
+    for (const cycle of cycleResult.cycles) {
+        for (let i=1;i<cycle.length;i++) {
+            if(suspSet.has(cycle[0])&&suspSet.has(cycle[i])) union(cycle[0],cycle[i]);
+        }
     }
+    
+    // Removed general adjacency merging to prevent distinct rings from combining purely by overlapping counterparties
+    
     const groups=new Map();
     for (const acc of suspSet){ const r=find(acc); if(!groups.has(r)) groups.set(r,[]); groups.get(r).push(acc); }
     const rings=[]; let rn=1;
     for (const [,members] of groups) {
-      if (members.length<2) continue;
+      if (members.length<3) continue; // Rings must contain at least 3 members
       const ringId=`RING_${String(rn).padStart(3,'0')}`;
       const pc={};
       for (const acc of members){ const s=suspicious.find(s=>s.account_id===acc); if(s) for(const p of s.detected_patterns) pc[p]=(pc[p]||0)+1; }
@@ -1003,10 +1034,10 @@ function dateInputToMs(val, endOfDay = false) {
 /**
  * Parse a free-form date string entered by the user.
  * Supports:
- *   YYYY-MM-DD  → exact day
- *   YYYY-MM     → full month
- *   YYYY        → full year
- *   "Jan 2025" / "January 2025" / "2025 Jan" → full month
+ * YYYY-MM-DD  → exact day
+ * YYYY-MM     → full month
+ * YYYY        → full year
+ * "Jan 2025" / "January 2025" / "2025 Jan" → full month
  * Returns { fromMs, toMs } or null on failure.
  */
 function parseManualDate(raw) {
@@ -1105,7 +1136,6 @@ function initDateSearchBar(allTransactions) {
   document.querySelectorAll('.dsb-quick').forEach(b => b.classList.remove('active'));
 
   // ── Quick range buttons ──
-  // KEY FIX: anchor to dataMaxTs (latest date in dataset), not new Date()
   document.querySelectorAll('.dsb-quick').forEach(btn => {
     const fresh = btn.cloneNode(true);
     btn.parentNode.replaceChild(fresh, btn);
