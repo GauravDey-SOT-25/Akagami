@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MuleTrace — Elite Financial Intelligence</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --voltage-purple: #8060f0;
+      --deep-obsidian: #030408;
+    }
+
+    body, html {
+      margin: 0; padding: 0; background: var(--deep-obsidian);
+      font-family: 'DM Sans', sans-serif; color: #a0aec0; overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* ── 1. Compact Manifesto Card ── */
+    .manifesto-container {
+      padding: 40px 40px 0; max-width: 1000px; margin: 0 auto;
+    }
+    .manifesto-card {
+      background: linear-gradient(145deg, rgba(20, 24, 40, 0.8) 0%, rgba(10, 12, 20, 0.9) 100%);
+      border: 1px solid #1e2d45; border-radius: 8px; 
+      padding: 30px 40px; position: relative; overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .manifesto-card::before {
+      content: 'MISSION_BRIEF'; position: absolute; top: 15px; right: 20px;
+      font-family: 'Space Mono', monospace; font-size: 9px; color: var(--voltage-purple);
+      letter-spacing: 3px; opacity: 0.4;
+    }
+    .manifesto-content h2 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #fff;
+      letter-spacing: 2px; margin: 0 0 10px 0;
+    }
+    .manifesto-content p { font-size: 15px; line-height: 1.6; color: #6e88a6; margin: 0; }
+    .manifesto-content span { color: var(--voltage-purple); font-weight: 600; }
+
+    /* ── 2. Elevated Hero Section ── */
+    .hero-section {
+      height: 65vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; position: relative;
+      margin-top: -20px;
+    }
+    .brand-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: clamp(80px, 15vw, 180px);
+      letter-spacing: 20px; margin: 0;
+      background: linear-gradient(to bottom, #fff 40%, var(--voltage-purple) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 40px rgba(128, 96, 240, 0.3));
+    }
+
+    /* ── 3. Scroll Hint ── */
+    .scroll-hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      text-align: center; font-family: 'Space Mono', monospace; font-size: 10px;
+      letter-spacing: 4px; color: #4b2c91; text-transform: uppercase;
+    }
+    .scroll-hint span {
+      display: block; width: 1px; height: 30px; background: var(--voltage-purple);
+      margin: 10px auto; animation: pulseLine 2s infinite;
+    }
+    @keyframes pulseLine { 0% { height: 0; opacity: 0; } 50% { height: 30px; opacity: 1; } 100% { height: 30px; opacity: 0; } }
+
+    /* ── 4. Loading Overlay (Hidden by default) ── */
+    #loaderOverlay {
+      position: fixed; inset: 0; background: var(--deep-obsidian);
+      display: none; align-items: center; justify-content: center;
+      z-index: 9999; flex-direction: column; gap: 20px;
+    }
+    .loading-circle {
+      width: 60px; height: 60px;
+      border: 2px solid rgba(128, 96, 240, 0.1);
+      border-top: 2px solid var(--voltage-purple);
+      border-radius: 50%;
+      animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      position: relative;
+    }
+    .loading-circle::after {
+      content: ''; position: absolute; inset: 15px;
+      background: var(--voltage-purple); border-radius: 50%;
+      animation: pulseCore 1.5s ease-in-out infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes pulseCore { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
+
+    /* ── 5. Impact Carousel & Stats (Preserved) ── */
+    .impact-carousel { max-width: 1200px; margin: 40px auto; overflow: hidden; background: #060812; border: 1px solid #1e2d45; border-radius: 20px; }
+    .impact-track { display: flex; animation: carouselSlide 20s infinite linear; width: calc(400px * 8); }
+    .impact-item { width: 400px; padding: 40px; flex-shrink: 0; border-right: 1px solid #1e2d45; }
+    .impact-num { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: #f01030; }
+    .impact-label { color: #fff; font-size: 18px; margin: 10px 0; }
+    @keyframes carouselSlide { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-400px * 4)); } }
+
+    .marquee-container { width: 100%; background: rgba(75, 44, 145, 0.05); border-top: 1px solid #1e2d45; border-bottom: 1px solid #1e2d45; padding: 12px 0; overflow: hidden; white-space: nowrap; margin-bottom: 60px; }
+    .marquee-track { display: inline-block; animation: scroll 40s linear infinite; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--voltage-purple); }
+    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    .info-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .info-card { background: #0b0e17; border: 1px solid #1e2d45; padding: 40px; border-radius: 16px; transition: 0.5s; cursor: default; }
+    .info-card:hover { transform: translateY(-10px); border-color: var(--voltage-purple); }
+    .info-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #fff; margin: 0 0 15px; }
+    
+    .stats-bar-landing { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: rgba(11, 14, 23, 0.8); padding: 30px; border-radius: 16px; border: 1px solid #1e2d45; }
+    .stat-fact { text-align: center; }
+    .stat-fact-val { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: var(--voltage-purple); }
+    
+    .initialize-box { grid-column: 1 / -1; text-align: center; padding: 80px 0; }
+    .enter-btn { background: var(--voltage-purple); color: #fff; padding: 24px 80px; border: none; font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 5px; cursor: pointer; transition: 0.4s; clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%); }
+    .enter-btn:hover { background: #fff; color: #4b2c91; box-shadow: 0 0 50px rgba(128, 96, 240, 0.4); }
+  </style>
+</head>
+<body>
+
+  <div id="loaderOverlay">
+    <div class="loading-circle"></div>
+    <div style="font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--voltage-purple);">AUTHORIZING TERMINAL</div>
+  </div>
+
+  <div class="manifesto-container">
+    <div class="manifesto-card">
+      <div class="manifesto-content">
+        <h2>System Intelligence Overview</h2>
+        <p>MuleTrace is a high-clearance <span>Financial Forensics Engine</span> engineered to dismantle money mulling syndicates. By leveraging <span>Graph Theory</span> and <span>Link Analysis</span>, we expose hidden connective tissue in transaction data.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-section">
+    <h1 class="brand-title">MULETRACE</h1>
+    <p style="font-family: 'Space Mono', monospace; letter-spacing: 6px; font-size: 12px; color: #4b2c91; margin-top: 10px;">IDENTITY · TRACE · DISRUPT</p>
+    <div class="scroll-hint">SCROLL TO ANALYZE<span></span></div>
+  </div>
+
+  <div class="marquee-container">
+    <div class="marquee-track">
+      <span class="marquee-item"><span>ALERT:</span> GLOBAL MONEY LAUNDERING VOLUME ESTIMATED AT 2-5% OF GLOBAL GDP</span>
+      <span class="marquee-item"><span>FACT:</span> OVER 90% OF MONEY MULE TRANSACTIONS GO UNDETECTED</span>
+      <span class="marquee-item"><span>GOV STAT:</span> US FINCEN REPORTS 400% INCREASE IN DIGITAL MULE RECRUITMENT</span>
+      <span class="marquee-item"><span>ALERT:</span> SMURFING PATTERNS DETECTED IN 68% OF RECENT FRAUD RINGS</span>
+    </div>
+  </div>
+
+  <div class="impact-carousel">
+    <div class="impact-track">
+      <div class="impact-item">
+        <div class="impact-num">800K+</div>
+        <div class="impact-label">Bank Accounts Closed</div>
+        <p>Annual impact on individuals recruited into criminal networks.</p>
+      </div>
+      <div class="impact-item">
+        <div class="impact-num">14 YRS</div>
+        <div class="impact-label">Max Prison Sentence</div>
+        <p>The severe legal consequence for money laundering participation.</p>
+      </div>
+      <div class="impact-item">
+        <div class="impact-num">$2.4T</div>
+        <div class="impact-label">Economic Destabilization</div>
+        <p>Total illicit funds circulating through the global market.</p>
+      </div>
+      <div class="impact-item"><div class="impact-num">800K+</div><div class="impact-label">Bank Accounts Closed</div></div>
+      <div class="impact-item"><div class="impact-num">14 YRS</div><div class="impact-label">Max Prison Sentence</div></div>
+    </div>
+  </div>
+
+  <div class="info-container">
+    <div class="info-card">
+      <h3>The Anatomy of a Mule</h3>
+      <p>Money mulling is a sophisticated laundering tactic where legitimate bank accounts are "rented" by criminal syndicates.</p>
+    </div>
+    <div class="info-card">
+      <h3>Digital Smurfing</h3>
+      <p>Syndicates split large sums into small transactions. MuleTrace uses graph theory to reconnect these fragments.</p>
+    </div>
+
+    <div class="stats-bar-landing">
+      <div class="stat-fact"><span class="stat-fact-val">$2.4T</span><span class="stat-fact-label">Est. Laundering</span></div>
+      <div class="stat-fact"><span class="stat-fact-val">100k+</span><span class="stat-fact-label">Active Mules</span></div>
+      <div class="stat-fact"><span class="stat-fact-val">84%</span><span class="stat-fact-label">Social Recruitment</span></div>
+      <div class="stat-fact"><span class="stat-fact-val">2.5s</span><span class="stat-fact-label">Txn Velocity</span></div>
+    </div>
+
+    <div class="initialize-box">
+      <button class="enter-btn" onclick="startEngine()">INITIATE FORENSICS →</button>
+    </div>
+  </div>
+
+  <script>
+    function startEngine() {
+      // 1. Show the loader overlay
+      document.getElementById('loaderOverlay').style.display = 'flex';
+      
+      // 2. Short artificial delay for a "secure handshake" feel
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2000); 
+    }
+  </script>
+</body>
+</html>
