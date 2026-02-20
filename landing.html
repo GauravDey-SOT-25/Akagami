@@ -1,203 +1,898 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MuleTrace — Elite Financial Intelligence</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RIFT 2026 — Financial Forensics Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
   <style>
-    :root {
-      --voltage-purple: #8060f0;
-      --deep-obsidian: #030408;
-    }
+    .overlay-divider { width: 1px; height: 28px; background: #1e2d45; margin: 0 4px; flex-shrink: 0; }
+    .overlay-legend { border: none !important; background: none !important; padding: 0 !important; gap: 6px; }
+    .overlay-legend .legend-item { padding: 4px 8px; font-size: 11px; }
 
-    body, html {
-      margin: 0; padding: 0; background: var(--deep-obsidian);
-      font-family: 'DM Sans', sans-serif; color: #a0aec0; overflow-x: hidden;
-      scroll-behavior: smooth;
-    }
-
-    /* ── 1. Compact Manifesto Card ── */
-    .manifesto-container {
-      padding: 40px 40px 0; max-width: 1000px; margin: 0 auto;
-    }
-    .manifesto-card {
-      background: linear-gradient(145deg, rgba(20, 24, 40, 0.8) 0%, rgba(10, 12, 20, 0.9) 100%);
-      border: 1px solid #1e2d45; border-radius: 8px; 
-      padding: 30px 40px; position: relative; overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    }
-    .manifesto-card::before {
-      content: 'MISSION_BRIEF'; position: absolute; top: 15px; right: 20px;
-      font-family: 'Space Mono', monospace; font-size: 9px; color: var(--voltage-purple);
-      letter-spacing: 3px; opacity: 0.4;
-    }
-    .manifesto-content h2 {
-      font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #fff;
-      letter-spacing: 2px; margin: 0 0 10px 0;
-    }
-    .manifesto-content p { font-size: 15px; line-height: 1.6; color: #6e88a6; margin: 0; }
-    .manifesto-content span { color: var(--voltage-purple); font-weight: 600; }
-
-    /* ── 2. Elevated Hero Section ── */
-    .hero-section {
-      height: 65vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; position: relative;
-      margin-top: -20px;
-    }
-    .brand-title {
-      font-family: 'Bebas Neue', sans-serif; font-size: clamp(80px, 15vw, 180px);
-      letter-spacing: 20px; margin: 0;
-      background: linear-gradient(to bottom, #fff 40%, var(--voltage-purple) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 40px rgba(128, 96, 240, 0.3));
-    }
-
-    /* ── 3. Scroll Hint ── */
-    .scroll-hint {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      text-align: center; font-family: 'Space Mono', monospace; font-size: 10px;
-      letter-spacing: 4px; color: #4b2c91; text-transform: uppercase;
-    }
-    .scroll-hint span {
-      display: block; width: 1px; height: 30px; background: var(--voltage-purple);
-      margin: 10px auto; animation: pulseLine 2s infinite;
-    }
-    @keyframes pulseLine { 0% { height: 0; opacity: 0; } 50% { height: 30px; opacity: 1; } 100% { height: 30px; opacity: 0; } }
-
-    /* ── 4. Loading Overlay (Hidden by default) ── */
-    #loaderOverlay {
-      position: fixed; inset: 0; background: var(--deep-obsidian);
-      display: none; align-items: center; justify-content: center;
-      z-index: 9999; flex-direction: column; gap: 20px;
-    }
-    .loading-circle {
-      width: 60px; height: 60px;
-      border: 2px solid rgba(128, 96, 240, 0.1);
-      border-top: 2px solid var(--voltage-purple);
-      border-radius: 50%;
-      animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    /* ── Date Search Bar ── */
+    .date-search-bar {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
       position: relative;
+      overflow: hidden;
+      animation: fadeUp .4s ease .15s both;
     }
-    .loading-circle::after {
-      content: ''; position: absolute; inset: 15px;
-      background: var(--voltage-purple); border-radius: 50%;
-      animation: pulseCore 1.5s ease-in-out infinite;
+    .date-search-bar::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #8060f0, #00c8f0, #f06020);
+      opacity: 0.7;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes pulseCore { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
 
-    /* ── 5. Impact Carousel & Stats (Preserved) ── */
-    .impact-carousel { max-width: 1200px; margin: 40px auto; overflow: hidden; background: #060812; border: 1px solid #1e2d45; border-radius: 20px; }
-    .impact-track { display: flex; animation: carouselSlide 20s infinite linear; width: calc(400px * 8); }
-    .impact-item { width: 400px; padding: 40px; flex-shrink: 0; border-right: 1px solid #1e2d45; }
-    .impact-num { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: #f01030; }
-    .impact-label { color: #fff; font-size: 18px; margin: 10px 0; }
-    @keyframes carouselSlide { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-400px * 4)); } }
+    .dsb-top-row {
+      display: flex; align-items: flex-start; gap: 0;
+    }
+    .dsb-divider-v {
+      width: 1px; background: var(--border);
+      align-self: stretch; flex-shrink: 0; margin: 0;
+    }
 
-    .marquee-container { width: 100%; background: rgba(75, 44, 145, 0.05); border-top: 1px solid #1e2d45; border-bottom: 1px solid #1e2d45; padding: 12px 0; overflow: hidden; white-space: nowrap; margin-bottom: 60px; }
-    .marquee-track { display: inline-block; animation: scroll 40s linear infinite; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--voltage-purple); }
-    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .dsb-manual-group,
+    .dsb-picker-group,
+    .dsb-quick-group {
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      flex: 1; min-width: 0;
+    }
+    .dsb-section-label {
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent); opacity: 0.8;
+    }
 
-    .info-container { max-width: 1200px; margin: 0 auto 100px; padding: 0 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-    .info-card { background: #0b0e17; border: 1px solid #1e2d45; padding: 40px; border-radius: 16px; transition: 0.5s; cursor: default; }
-    .info-card:hover { transform: translateY(-10px); border-color: var(--voltage-purple); }
-    .info-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #fff; margin: 0 0 15px; }
-    
-    .stats-bar-landing { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: rgba(11, 14, 23, 0.8); padding: 30px; border-radius: 16px; border: 1px solid #1e2d45; }
-    .stat-fact { text-align: center; }
-    .stat-fact-val { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: var(--voltage-purple); }
-    
-    .initialize-box { grid-column: 1 / -1; text-align: center; padding: 80px 0; }
-    .enter-btn { background: var(--voltage-purple); color: #fff; padding: 24px 80px; border: none; font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 5px; cursor: pointer; transition: 0.4s; clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%); }
-    .enter-btn:hover { background: #fff; color: #4b2c91; box-shadow: 0 0 50px rgba(128, 96, 240, 0.4); }
+    .dsb-manual-wrap { display: flex; gap: 8px; align-items: center; }
+    .dsb-manual-input {
+      flex: 1;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 4px; padding: 9px 14px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text); outline: none; min-width: 0;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .dsb-manual-input::placeholder { color: var(--text3); font-size: 11px; }
+    .dsb-manual-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,200,240,.1); }
+    .dsb-manual-input.error { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(255,16,48,.1) !important; }
+    .dsb-manual-go {
+      background: rgba(0,200,240,.12); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 9px 18px;
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+      color: var(--accent); cursor: pointer; text-transform: uppercase; white-space: nowrap;
+      transition: background .2s, box-shadow .2s, transform .15s; flex-shrink: 0;
+    }
+    .dsb-manual-go:hover { background: rgba(0,200,240,.22); box-shadow: 0 0 12px rgba(0,200,240,.3); transform: translateY(-1px); }
+    .dsb-manual-go:active { transform: translateY(0); }
+    .dsb-manual-hint {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text3);
+      letter-spacing: 0.5px;
+    }
+    .dsb-manual-hint span { color: var(--text2); }
+    .dsb-manual-error {
+      font-family: var(--font-mono); font-size: 10px; color: var(--danger);
+      letter-spacing: 0.3px;
+      background: rgba(255,16,48,.07); border: 1px solid rgba(255,16,48,.2);
+      border-radius: 4px; padding: 6px 10px;
+    }
+
+    .dsb-fields { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+    .dsb-field-group { display: flex; flex-direction: column; gap: 4px; }
+    .dsb-field-label {
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3);
+    }
+    .dsb-input {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 4px; padding: 8px 10px;
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text); outline: none; cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+      color-scheme: dark;
+    }
+    .dsb-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,200,240,.1); }
+    .dsb-input:hover { border-color: var(--border3); }
+    .dsb-separator {
+      font-family: var(--font-mono); font-size: 14px;
+      color: var(--text3); padding-bottom: 9px; flex-shrink: 0;
+    }
+    .dsb-apply {
+      background: rgba(0,200,240,.1); border: 1px solid var(--accent);
+      border-radius: 4px; padding: 8px 16px;
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+      color: var(--accent); cursor: pointer; text-transform: uppercase;
+      transition: background .2s, box-shadow .2s, transform .15s; white-space: nowrap;
+    }
+    .dsb-apply:hover { background: rgba(0,200,240,.2); box-shadow: 0 0 12px rgba(0,200,240,.25); transform: translateY(-1px); }
+    .dsb-apply:active { transform: translateY(0); }
+
+    .dsb-quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .dsb-quick {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 4px; padding: 7px 14px;
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px;
+      color: var(--text3); cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .dsb-quick:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,200,240,.05); }
+    .dsb-quick.active {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(0,200,240,.1); box-shadow: 0 0 10px rgba(0,200,240,.2);
+    }
+    .dsb-dataset-range {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text3);
+      letter-spacing: 0.5px; margin-top: 2px;
+    }
+    .dsb-dataset-range span { color: var(--text2); }
+
+    .dsb-bottom-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px; gap: 16px;
+      background: rgba(0,200,240,.03);
+      border-top: 1px solid var(--border);
+    }
+    .dsb-result-badge {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-family: var(--font-mono); font-size: 10px; color: var(--text2);
+      letter-spacing: 0.5px;
+    }
+    .dsb-badge-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,200,240,.06); border: 1px solid rgba(0,200,240,.18);
+      border-radius: 5px; padding: 5px 12px;
+    }
+    .dsb-badge-chip.warn-chip  { background: rgba(240,160,0,.06); border-color: rgba(240,160,0,.2); }
+    .dsb-badge-chip.danger-chip{ background: rgba(255,16,48,.06); border-color: rgba(255,16,48,.2); }
+    .dsb-badge-chip.ring-chip  { background: rgba(240,96,32,.06); border-color: rgba(240,96,32,.2); }
+    .dsb-badge-num {
+      font-family: var(--font-disp); font-size: 18px;
+      letter-spacing: 1px; line-height: 1; color: var(--accent);
+    }
+    .dsb-badge-num.warn   { color: var(--warn); }
+    .dsb-badge-num.danger { color: var(--danger); }
+    .dsb-badge-num.ring   { color: var(--ring-color); }
+    .dsb-badge-lbl { font-size: 9px; color: var(--text3); }
+    .dsb-active-range {
+      font-family: var(--font-mono); font-size: 10px; color: var(--accent);
+      padding: 5px 12px; background: rgba(0,200,240,.06);
+      border: 1px solid rgba(0,200,240,.18); border-radius: 5px;
+      letter-spacing: 0.5px;
+    }
+    .dsb-clear {
+      background: rgba(255,16,48,.06); border: 1px solid rgba(255,16,48,.25);
+      border-radius: 4px; padding: 7px 16px;
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px;
+      color: var(--danger); cursor: pointer;
+      transition: background .2s, border-color .2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .dsb-clear:hover { background: rgba(255,16,48,.14); border-color: var(--danger); }
+    .dsb-clear-inline {
+      padding: 0 14px; height: 34px;
+      background: rgba(255,16,48,.05); border: 1px solid rgba(255,16,48,.2);
+      border-radius: 4px; color: var(--danger);
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s, border-color .15s, opacity .15s;
+      opacity: 0.45;
+    }
+    .dsb-clear-inline:hover { background: rgba(255,16,48,.14); border-color: var(--danger); opacity: 1; }
+
+    @keyframes rowHighlight {
+      0%   { background: rgba(0,200,240,.12); }
+      100% { background: transparent; }
+    }
+    .date-match-row { animation: rowHighlight 1.2s ease forwards; }
+  </style>
+  <style>
+  .graph-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: #060810;
+    display: flex; flex-direction: column;
+    animation: fadeIn .2s ease;
+  }
+  .graph-overlay::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,200,240,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,240,.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .overlay-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; gap: 16px; flex-wrap: wrap; flex-shrink: 0;
+    background: #0b0e17; border-bottom: 1px solid #1e2d45;
+    position: relative; z-index: 1;
+  }
+  .overlay-header::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, #00c8f0, #8060f0, transparent);
+    opacity: .4;
+  }
+  .overlay-title-block { display: flex; align-items: center; gap: 12px; }
+  .overlay-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; color: #dde8f5; }
+  .overlay-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cy-overlay-container { flex: 1; width: 100%; background: #060810; position: relative; }
+  .expand-btn { margin-left: 4px; border-color: #0080aa !important; color: #00c8f0 !important; }
+  .expand-btn:hover { background: rgba(0,200,240,.1) !important; border-color: #00c8f0 !important; }
+
+  #accountDetailPanel {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 380px;
+    background: #0b0e17;
+    border-left: 1px solid #1e2d45;
+    display: none;
+    flex-direction: column;
+    z-index: 20;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: -8px 0 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  #accountDetailPanel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #00c8f0, #8060f0, #f06020);
+    opacity: 0.9;
+  }
+  #accountDetailPanel.nd2-open { transform: translateX(0); }
+
+  .nd2-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #1e2d45;
+    flex-shrink: 0;
+    background: #0b0e17;
+  }
+  .nd2-header-left { display: flex; flex-direction: column; gap: 6px; }
+  .nd2-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px; letter-spacing: 3px;
+    text-transform: uppercase; color: #00c8f0; opacity: 0.7;
+  }
+  .nd2-account-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px; font-weight: 700;
+    color: #dde8f5; letter-spacing: 0.5px;
+    word-break: break-all;
+  }
+  .nd2-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .nd2-status::before { content: '●'; font-size: 6px; }
+  .nd2-status-normal     { background: rgba(58,122,204,0.12); border: 1px solid rgba(58,122,204,0.3); color: #3a7acc; }
+  .nd2-status-suspicious { background: rgba(255,16,48,0.1);   border: 1px solid rgba(255,16,48,0.35); color: #ff1030; }
+  .nd2-status-ring       { background: rgba(240,96,32,0.1);   border: 1px solid rgba(240,96,32,0.35); color: #f06020; }
+
+  .nd2-close {
+    background: none; border: 1px solid #1e2d45;
+    color: #3a4f68; font-size: 14px; cursor: pointer;
+    padding: 4px 8px; border-radius: 4px;
+    transition: color .15s, border-color .15s, background .15s;
+    flex-shrink: 0; margin-left: 8px;
+  }
+  .nd2-close:hover { color: #ff1030; border-color: rgba(255,16,48,0.4); background: rgba(255,16,48,0.06); }
+
+  .nd2-body { flex: 1; overflow-y: auto; padding: 0 0 24px; }
+  .nd2-body::-webkit-scrollbar { width: 3px; }
+  .nd2-body::-webkit-scrollbar-track { background: transparent; }
+  .nd2-body::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
+
+  .nd2-section { padding: 16px 20px; border-bottom: 1px solid #111520; }
+  .nd2-section:last-child { border-bottom: none; }
+
+  .nd2-section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: #3a4f68;
+    margin-bottom: 12px;
+  }
+
+  .nd2-score-row { display: flex; align-items: center; gap: 12px; }
+  .nd2-score-track { flex: 1; height: 4px; background: #161c2a; border-radius: 2px; overflow: hidden; }
+  .nd2-score-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+  .nd2-score-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 1px; line-height: 1;
+    min-width: 36px; text-align: right;
+  }
+
+  .nd2-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .nd2-stat { background: #111520; border: 1px solid #1e2d45; border-radius: 4px; padding: 10px 12px; }
+  .nd2-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.5px; color: #dde8f5; line-height: 1; margin-bottom: 4px; }
+  .nd2-stat-val.sent { color: #ff6080; }
+  .nd2-stat-val.recv { color: #00c890; }
+  .nd2-stat-label { font-family: 'Space Mono', monospace; font-size: 8px; color: #3a4f68; letter-spacing: 1px; text-transform: uppercase; }
+
+  .nd2-flow-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .nd2-flow-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.5px; min-width: 56px; white-space: nowrap; }
+  .nd2-flow-label.sent { color: #ff6080; text-align: right; }
+  .nd2-flow-label.recv { color: #00c890; }
+  .nd2-flow-bar { flex: 1; height: 6px; background: rgba(0,200,144,0.15); border-radius: 3px; overflow: hidden; position: relative; }
+  .nd2-flow-sent { position: absolute; left: 0; top: 0; bottom: 0; background: #ff6080; border-radius: 3px; box-shadow: 0 0 6px rgba(255,96,128,0.4); transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
+
+  .nd2-patterns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .nd2-pattern { background: rgba(0,200,240,0.06); border: 1px solid rgba(0,200,240,0.2); border-radius: 3px; padding: 4px 10px; font-family: 'Space Mono', monospace; font-size: 9px; color: #00c8f0; letter-spacing: 0.5px; text-transform: uppercase; }
+  .nd2-muted { font-family: 'Space Mono', monospace; font-size: 10px; color: #3a4f68; letter-spacing: 0.5px; }
+
+  .nd2-ring-block { background: rgba(240,96,32,0.06); border: 1px solid rgba(240,96,32,0.2); border-radius: 6px; padding: 12px 14px; }
+  .nd2-ring-id { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: #f06020; margin-bottom: 4px; }
+  .nd2-ring-meta { display: flex; align-items: center; gap: 6px; font-family: 'Space Mono', monospace; font-size: 9px; color: #6e88a6; margin-bottom: 10px; flex-wrap: wrap; }
+  .nd2-ring-dot { color: #3a4f68; }
+  .nd2-ring-peers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .nd2-ring-peer { background: rgba(240,96,32,0.08); border: 1px solid rgba(240,96,32,0.2); border-radius: 3px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 9px; color: #f06020; transition: background .15s, border-color .15s; }
+  .nd2-ring-peer:hover { background: rgba(240,96,32,0.18); border-color: rgba(240,96,32,0.5); }
+
+  .nd2-conn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .nd2-conn-label { font-family: 'Space Mono', monospace; font-size: 8px; color: #3a4f68; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .nd2-conn-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .nd2-conn-peer { border-radius: 3px; padding: 2px 7px; font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.3px; transition: background .15s, border-color .15s; }
+  .sent-peer { background: rgba(255,96,128,0.07); border: 1px solid rgba(255,96,128,0.2); color: #ff6080; }
+  .sent-peer:hover { background: rgba(255,96,128,0.16); border-color: rgba(255,96,128,0.45); }
+  .recv-peer { background: rgba(0,200,144,0.07); border: 1px solid rgba(0,200,144,0.2); color: #00c890; }
+  .recv-peer:hover { background: rgba(0,200,144,0.16); border-color: rgba(0,200,144,0.45); }
+
+  .nd2-txn-list { display: flex; flex-direction: column; gap: 2px; }
+  .nd2-txn-row { display: grid; grid-template-columns: 48px 1fr auto 72px; align-items: center; gap: 8px; padding: 7px 10px; background: #111520; border-radius: 4px; border: 1px solid transparent; transition: border-color .15s, background .15s; }
+  .nd2-txn-row:hover { background: #161c2a; border-color: #1e2d45; }
+  .nd2-txn-dir { font-family: 'Space Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-align: center; padding: 2px 4px; border-radius: 3px; }
+  .nd2-txn-dir.sent { background: rgba(255,96,128,0.1); color: #ff6080; border: 1px solid rgba(255,96,128,0.25); }
+  .nd2-txn-dir.recv { background: rgba(0,200,144,0.1); color: #00c890; border: 1px solid rgba(0,200,144,0.25); }
+  .nd2-txn-peer { font-family: 'Space Mono', monospace; font-size: 9px; color: #6e88a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nd2-txn-amount { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; text-align: right; white-space: nowrap; }
+  .nd2-txn-amount.sent { color: #ff6080; }
+  .nd2-txn-amount.recv { color: #00c890; }
+  .nd2-txn-date { font-family: 'Space Mono', monospace; font-size: 8px; color: #3a4f68; text-align: right; }
+
+  #accountDetailPanelOverlay {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 380px;
+    background: #0b0e17; border-left: 1px solid #1e2d45;
+    display: none; flex-direction: column; z-index: 1010;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: -8px 0 40px rgba(0,0,0,0.7); overflow: hidden;
+  }
+  #accountDetailPanelOverlay::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #00c8f0, #8060f0, #f06020); opacity: 0.9;
+  }
+  #accountDetailPanelOverlay.nd2-open { transform: translateX(0); }
+
+  .adj-list-view { width: 100%; height: 530px; background: var(--bg, #060810); border-radius: 6px; border: 1px solid #1e2d45; overflow-y: auto; overflow-x: hidden; padding: 0; font-family: 'Space Mono', monospace; }
+  .adj-list-view::-webkit-scrollbar { width: 4px; }
+  .adj-list-view::-webkit-scrollbar-track { background: transparent; }
+  .adj-list-view::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
+
+  .adj-toolbar { position: sticky; top: 0; z-index: 2; background: #0b0e17; border-bottom: 1px solid #1e2d45; padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .adj-search { background: #111520; border: 1px solid #1e2d45; border-radius: 4px; padding: 5px 10px; font-family: 'Space Mono', monospace; font-size: 10px; color: #dde8f5; outline: none; width: 200px; transition: border-color .2s; }
+  .adj-search::placeholder { color: #3a4f68; }
+  .adj-search:focus { border-color: #00c8f0; }
+  .adj-sort-btn { background: #111520; border: 1px solid #1e2d45; border-radius: 4px; padding: 5px 10px; font-family: 'Space Mono', monospace; font-size: 9px; color: #6e88a6; cursor: pointer; letter-spacing: 0.5px; transition: border-color .15s, color .15s; }
+  .adj-sort-btn:hover, .adj-sort-btn.active { border-color: #00c8f0; color: #00c8f0; }
+  .adj-count { margin-left: auto; font-size: 9px; color: #3a4f68; letter-spacing: 1px; }
+
+  .adj-node-row { border-bottom: 1px solid #0f1420; transition: background .15s; }
+  .adj-node-row:last-child { border-bottom: none; }
+  .adj-node-header { display: flex; align-items: center; gap: 10px; padding: 11px 16px; cursor: pointer; transition: background .15s; user-select: none; }
+  .adj-node-header:hover { background: rgba(0,200,240,0.03); }
+  .adj-node-chevron { font-size: 8px; color: #3a4f68; transition: transform .2s; flex-shrink: 0; width: 10px; }
+  .adj-node-row.expanded .adj-node-chevron { transform: rotate(90deg); }
+  .adj-node-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+  .adj-node-dot.normal     { background: #3a7acc; box-shadow: 0 0 4px rgba(58,122,204,.5); }
+  .adj-node-dot.suspicious { background: #ff1030; box-shadow: 0 0 4px rgba(255,16,48,.5); }
+  .adj-node-dot.ring       { background: #f06020; box-shadow: 0 0 4px rgba(240,96,32,.5); }
+  .adj-node-id { font-size: 11px; font-weight: 700; color: #dde8f5; letter-spacing: 0.3px; flex: 1; }
+  .adj-node-badge { font-size: 8px; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px; flex-shrink: 0; }
+  .adj-node-badge.suspicious { background: rgba(255,16,48,.08); border: 1px solid rgba(255,16,48,.25); color: #ff1030; }
+  .adj-node-badge.ring { background: rgba(240,96,32,.08); border: 1px solid rgba(240,96,32,.25); color: #f06020; }
+  .adj-node-meta { font-size: 9px; color: #3a4f68; letter-spacing: 0.3px; white-space: nowrap; }
+  .adj-node-meta span { color: #6e88a6; }
+
+  .adj-edges-block { display: none; padding: 0 16px 12px 36px; }
+  .adj-node-row.expanded .adj-edges-block { display: block; }
+
+  .adj-section-label { font-size: 8px; color: #3a4f68; letter-spacing: 2px; text-transform: uppercase; margin: 8px 0 5px; }
+  .adj-edge-list { display: flex; flex-direction: column; gap: 3px; }
+  .adj-edge-item { display: grid; grid-template-columns: 18px 1fr auto auto; align-items: center; gap: 8px; padding: 5px 8px; background: #0f1420; border-radius: 4px; border: 1px solid transparent; transition: border-color .15s, background .15s; cursor: pointer; }
+  .adj-edge-item:hover { background: #111824; border-color: #1e2d45; }
+  .adj-edge-arrow { font-size: 10px; text-align: center; }
+  .adj-edge-arrow.out { color: #ff6080; }
+  .adj-edge-arrow.in  { color: #00c890; }
+  .adj-edge-peer { font-size: 10px; color: #6e88a6; letter-spacing: 0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .adj-edge-amount { font-size: 9px; font-weight: 700; white-space: nowrap; }
+  .adj-edge-amount.out { color: #ff6080; }
+  .adj-edge-amount.in  { color: #00c890; }
+  .adj-edge-count { font-size: 8px; color: #3a4f68; white-space: nowrap; }
+  .adj-empty-edges { font-size: 9px; color: #3a4f68; padding: 4px 0; letter-spacing: 0.5px; }
+
+  /* ── Summary Trigger Button ── */
+  .summary-trigger-section { animation: fadeUp .5s ease .35s both; }
+  .summary-open-btn {
+    width: 100%;
+    display: flex; align-items: center; gap: 20px;
+    padding: 22px 28px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+    text-align: left;
+  }
+  .summary-open-btn::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #00c8f0, #8060f0, #f06020);
+    opacity: 0.7;
+  }
+  .summary-open-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at left center, rgba(0,200,240,.04), transparent 60%);
+    pointer-events: none;
+  }
+  .summary-open-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(0,200,240,.15), 0 8px 32px rgba(0,0,0,.4);
+    transform: translateY(-1px);
+  }
+  .summary-open-btn:active { transform: translateY(0); }
+  .summary-btn-icon {
+    font-size: 28px; color: var(--accent);
+    filter: drop-shadow(0 0 8px rgba(0,200,240,.6));
+    flex-shrink: 0; line-height: 1;
+  }
+  .summary-btn-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .summary-btn-title {
+    font-family: var(--font-disp); font-size: 22px;
+    letter-spacing: 1.5px; color: var(--text);
+  }
+  .summary-btn-sub {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 1.5px; color: var(--text3);
+    text-transform: uppercase;
+  }
+  .summary-btn-arrow {
+    font-size: 24px; color: var(--accent); flex-shrink: 0;
+    transition: transform .2s;
+    opacity: 0.6;
+  }
+  .summary-open-btn:hover .summary-btn-arrow {
+    transform: translateX(6px); opacity: 1;
+  }
+
+  /* ── Summary Modal ── */
+  .summary-modal-backdrop {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(6, 8, 16, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn .2s ease;
+    padding: 24px;
+  }
+  .summary-modal {
+    width: 100%; max-width: 1100px;
+    height: 90vh;
+    background: #0b0e17;
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    animation: modalSlideUp .25s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(0,200,240,.08);
+  }
+  .summary-modal::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #00c8f0, #8060f0, #f06020);
+    opacity: 0.9;
+  }
+  @keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .summary-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px;
+    background: #0b0e17;
+    border-bottom: 1px solid #1e2d45;
+    flex-shrink: 0; gap: 16px;
+    position: relative;
+  }
+  .summary-modal-header::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,200,240,.3), rgba(128,96,240,.3), transparent);
+  }
+  .summary-modal-title-block { display: flex; align-items: center; gap: 14px; }
+  .summary-modal-title {
+    font-family: var(--font-disp); font-size: 22px;
+    letter-spacing: 1.5px; color: var(--text);
+  }
+  .summary-modal-sub {
+    font-family: var(--font-mono); font-size: 9px;
+    letter-spacing: 2px; color: var(--text3);
+    text-transform: uppercase; margin-top: 3px;
+  }
+  .summary-modal-close {
+    background: none; border: 1px solid #1e2d45;
+    color: #3a4f68; font-size: 16px; cursor: pointer;
+    padding: 6px 12px; border-radius: 6px;
+    transition: color .15s, border-color .15s, background .15s;
+    flex-shrink: 0;
+  }
+  .summary-modal-close:hover {
+    color: #ff1030; border-color: rgba(255,16,48,.4);
+    background: rgba(255,16,48,.06);
+  }
+
+  .summary-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px 28px;
+  }
+  .summary-modal-body::-webkit-scrollbar { width: 6px; }
+  .summary-modal-body::-webkit-scrollbar-track { background: #0b0e17; }
+  .summary-modal-body::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 3px; }
+  .summary-modal-body::-webkit-scrollbar-thumb:hover { background: #00c8f0; }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .summary-grid { grid-template-columns: 1fr; } }
+  .sum-block { background: #0b0e17; border: 1px solid #1e2d45; border-radius: 8px; overflow: hidden; position: relative; }
+  .sum-block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, #00c8f0, #8060f0, transparent); opacity: 0.5; }
+  .sum-block-wide { grid-column: 1 / -1; }
+  .sum-block-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid #111520; }
+  .sum-block-title { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: #00c8f0; }
+  .sum-block-badge { font-family: 'Space Mono', monospace; font-size: 8px; color: #3a4f68; letter-spacing: 1px; }
+  .sum-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); padding: 18px; gap: 0; }
+  .sum-kpi { text-align: center; padding: 0 8px; border-right: 1px solid #111520; }
+  .sum-kpi:last-child { border-right: none; }
+  .sum-kpi-val { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; color: #dde8f5; line-height: 1; margin-bottom: 6px; }
+  .sum-kpi-val.danger { color: #ff1030; } .sum-kpi-val.warn { color: #f0a000; }
+  .sum-kpi-val.accent { color: #00c8f0; } .sum-kpi-val.ring  { color: #f06020; }
+  .sum-kpi-val.success { color: #00e090; }
+  .sum-kpi-label { font-family: 'Space Mono', monospace; font-size: 8px; color: #3a4f68; letter-spacing: 1.2px; text-transform: uppercase; }
+  .sum-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .sum-table th { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: #3a4f68; padding: 9px 18px; text-align: left; border-bottom: 1px solid #111520; white-space: nowrap; }
+  .sum-table td { padding: 9px 18px; border-bottom: 1px solid #0f1420; font-family: 'Space Mono', monospace; color: #6e88a6; font-size: 10px; vertical-align: middle; }
+  .sum-table tr:last-child td { border-bottom: none; }
+  .sum-table tbody tr { transition: background .15s; cursor: pointer; }
+  .sum-table tbody tr:hover td { background: rgba(0,200,240,.025); color: #dde8f5; }
+  .sum-rank { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #253345; }
+  .sum-acc-id { color: #dde8f5 !important; font-weight: 700; }
+  .sum-score-wrap { display: flex; align-items: center; gap: 8px; }
+  .sum-score-bar { width: 48px; height: 3px; background: #161c2a; border-radius: 2px; overflow: hidden; }
+  .sum-score-fill { height: 100%; border-radius: 2px; }
+  .sum-score-num { font-weight: 700; min-width: 28px; }
+  .sum-amount { font-weight: 700; color: #dde8f5 !important; }
+  .sum-pattern-tag { display: inline-block; background: rgba(0,200,240,.06); border: 1px solid rgba(0,200,240,.18); border-radius: 3px; padding: 1px 6px; font-size: 8px; color: #00c8f0; letter-spacing: .3px; margin: 1px 2px; text-transform: uppercase; }
+  .sum-ring-id { color: #f06020 !important; font-weight: 700; }
+  .sum-risk-high { color: #ff1030 !important; font-weight: 700; }
+  .sum-risk-med  { color: #f0a000 !important; font-weight: 700; }
+  .sum-risk-low  { color: #00c8f0 !important; font-weight: 700; }
+  .sum-pattern-bars { padding: 14px 18px; display: flex; flex-direction: column; gap: 11px; }
+  .sum-pat-row { display: grid; grid-template-columns: 150px 1fr 44px; align-items: center; gap: 10px; }
+  .sum-pat-name { font-family: 'Space Mono', monospace; font-size: 9px; color: #6e88a6; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sum-pat-track { height: 5px; background: #111520; border-radius: 3px; overflow: hidden; }
+  .sum-pat-fill { height: 100%; border-radius: 3px; transition: width .7s cubic-bezier(.22,1,.36,1); }
+  .sum-pat-count { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: #dde8f5; text-align: right; }
+  .sum-flow-row { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; gap: 10px; padding: 8px 18px; border-bottom: 1px solid #0f1420; }
+  .sum-flow-row:last-child { border-bottom: none; }
+  .sum-flow-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #6e88a6; }
+  .sum-flow-bar-wrap { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #111520; }
+  .sum-flow-out { background: rgba(255,96,128,.55); }
+  .sum-flow-in  { background: rgba(0,200,144,.55); }
+  .sum-flow-val { font-family: 'Space Mono', monospace; font-size: 9px; color: #3a4f68; text-align: right; }
+  .sum-legend-row { display: flex; gap: 16px; padding: 10px 18px 14px; font-family: 'Space Mono', monospace; font-size: 8px; color: #3a4f68; border-top: 1px solid #0f1420; letter-spacing: .5px; }
+  .sum-legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
   </style>
 </head>
 <body>
 
-  <div id="loaderOverlay">
-    <div class="loading-circle"></div>
-    <div style="font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--voltage-purple);">AUTHORIZING TERMINAL</div>
-  </div>
-
-  <div class="manifesto-container">
-    <div class="manifesto-card">
-      <div class="manifesto-content">
-        <h2>System Intelligence Overview</h2>
-        <p>MuleTrace is a high-clearance <span>Financial Forensics Engine</span> engineered to dismantle money mulling syndicates. By leveraging <span>Graph Theory</span> and <span>Link Analysis</span>, we expose hidden connective tissue in transaction data.</p>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo-block">
+        <span class="logo-icon">◈</span>
+        <div>
+          <div class="logo-title">Financial Forensics Engine</div>
+          <div class="logo-sub">RIFT 2026 — Money Mule Detection Challenge</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="header-status" id="headerStatus">
+          <span class="status-dot idle"></span>
+          <span class="status-text">Awaiting Data</span>
+        </div>
+        <!-- Vault button injected here by vault.js -->
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="hero-section">
-    <h1 class="brand-title">MULETRACE</h1>
-    <p style="font-family: 'Space Mono', monospace; letter-spacing: 6px; font-size: 12px; color: #4b2c91; margin-top: 10px;">IDENTITY · TRACE · DISRUPT</p>
-    <div class="scroll-hint">SCROLL TO ANALYZE<span></span></div>
-  </div>
+  <main class="app-main">
 
-  <div class="marquee-container">
-    <div class="marquee-track">
-      <span class="marquee-item"><span>ALERT:</span> GLOBAL MONEY LAUNDERING VOLUME ESTIMATED AT 2-5% OF GLOBAL GDP</span>
-      <span class="marquee-item"><span>FACT:</span> OVER 90% OF MONEY MULE TRANSACTIONS GO UNDETECTED</span>
-      <span class="marquee-item"><span>GOV STAT:</span> US FINCEN REPORTS 400% INCREASE IN DIGITAL MULE RECRUITMENT</span>
-      <span class="marquee-item"><span>ALERT:</span> SMURFING PATTERNS DETECTED IN 68% OF RECENT FRAUD RINGS</span>
-    </div>
-  </div>
-
-  <div class="impact-carousel">
-    <div class="impact-track">
-      <div class="impact-item">
-        <div class="impact-num">800K+</div>
-        <div class="impact-label">Bank Accounts Closed</div>
-        <p>Annual impact on individuals recruited into criminal networks.</p>
+    <section class="panel upload-panel" id="uploadPanel">
+      <div class="panel-label">01 / Data Ingestion</div>
+      <h2 class="panel-title">Upload Transaction Data</h2>
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-inner">
+          <div class="drop-icon">⬡</div>
+          <div class="drop-text">Drop CSV file here</div>
+          <div class="drop-sub">or click to browse files</div>
+          <input type="file" id="fileInput" accept=".csv" hidden />
+        </div>
+        <div class="drop-progress" id="dropProgress">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
       </div>
-      <div class="impact-item">
-        <div class="impact-num">14 YRS</div>
-        <div class="impact-label">Max Prison Sentence</div>
-        <p>The severe legal consequence for money laundering participation.</p>
+      <div class="upload-meta" id="uploadMeta" style="display:none;">
+        <span class="meta-item" id="metaFilename"></span>
+        <span class="meta-item" id="metaRows"></span>
+        <span class="meta-item" id="metaTime"></span>
       </div>
-      <div class="impact-item">
-        <div class="impact-num">$2.4T</div>
-        <div class="impact-label">Economic Destabilization</div>
-        <p>Total illicit funds circulating through the global market.</p>
+      <div class="error-box" id="errorBox" style="display:none;"></div>
+      <div class="col-spec">
+        <div class="col-spec-title">Required CSV Columns</div>
+        <div class="col-tags">
+          <span class="col-tag">transaction_id</span>
+          <span class="col-tag">sender_id</span>
+          <span class="col-tag">receiver_id</span>
+          <span class="col-tag">amount</span>
+          <span class="col-tag">timestamp</span>
+        </div>
       </div>
-      <div class="impact-item"><div class="impact-num">800K+</div><div class="impact-label">Bank Accounts Closed</div></div>
-      <div class="impact-item"><div class="impact-num">14 YRS</div><div class="impact-label">Max Prison Sentence</div></div>
+      <button class="btn-ghost sample-btn" id="loadSampleBtn">Load Sample Dataset →</button>
+    </section>
+
+    <section class="stats-bar" id="statsBar" style="display:none;">
+      <div class="stat-card" data-icon="ACC">
+        <div class="stat-val" id="statAccounts">—</div>
+        <div class="stat-label">Accounts Analyzed</div>
+      </div>
+      <div class="stat-card" data-icon="TXN">
+        <div class="stat-val" id="statTxns">—</div>
+        <div class="stat-label">Transactions</div>
+      </div>
+      <div class="stat-card suspicious-stat" data-icon="⚑">
+        <div class="stat-val" id="statSuspicious">—</div>
+        <div class="stat-label">Suspicious Accounts</div>
+      </div>
+      <div class="stat-card ring-stat" data-icon="◎">
+        <div class="stat-val" id="statRings">—</div>
+        <div class="stat-label">Fraud Rings</div>
+      </div>
+      <div class="stat-card" data-icon="ms">
+        <div class="stat-val" id="statTime">—</div>
+        <div class="stat-label">Processing Time</div>
+      </div>
+    </section>
+
+    <!-- Date Search Bar -->
+    <section class="date-search-bar" id="dateSearchBar" style="display:none;">
+      <div class="dsb-top-row">
+        <div class="dsb-manual-group">
+          <div class="dsb-section-label">⌕ Search by Date</div>
+          <div class="dsb-manual-wrap">
+            <input type="text" class="dsb-manual-input" id="dateManualInput" placeholder="e.g. 2025-01-15  or  Jan 2025  or  2025" autocomplete="off" spellcheck="false" />
+            <button class="dsb-manual-go" id="dateManualGo">Search</button>
+          </div>
+          <div class="dsb-manual-hint">Accepts: <span>YYYY-MM-DD</span> · <span>YYYY-MM</span> · <span>YYYY</span> · <span>Mon YYYY</span></div>
+          <div class="dsb-manual-error" id="dateManualError" style="display:none;"></div>
+        </div>
+        <div class="dsb-divider-v"></div>
+        <div class="dsb-picker-group">
+          <div class="dsb-section-label">⊞ Date Range Picker</div>
+          <div class="dsb-fields">
+            <div class="dsb-field-group">
+              <label class="dsb-field-label">From</label>
+              <input type="date" class="dsb-input" id="dateFrom" />
+            </div>
+            <div class="dsb-separator">→</div>
+            <div class="dsb-field-group">
+              <label class="dsb-field-label">To</label>
+              <input type="date" class="dsb-input" id="dateTo" />
+            </div>
+            <button class="dsb-apply" id="applyDateFilter">Apply</button>
+            <button class="dsb-clear-inline" id="clearDateFilter">✕ Clear</button>
+          </div>
+        </div>
+        <div class="dsb-divider-v"></div>
+        <div class="dsb-quick-group">
+          <div class="dsb-section-label">⚡ Quick Range</div>
+          <div class="dsb-quick-btns">
+            <button class="dsb-quick" data-range="latest-day">Latest Day</button>
+            <button class="dsb-quick" data-range="7d">Last 7d</button>
+            <button class="dsb-quick" data-range="30d">Last 30d</button>
+            <button class="dsb-quick" data-range="all">All Time</button>
+          </div>
+          <div class="dsb-dataset-range" id="dsbDatasetRange"></div>
+        </div>
+      </div>
+      <div class="dsb-bottom-row" id="dsbBottomRow" style="display:none;">
+        <div class="dsb-result-badge" id="dateResultBadge"></div>
+      </div>
+    </section>
+
+    <div class="results-grid" id="resultsGrid" style="display:none;">
+      <section class="panel graph-panel" style="position:relative; overflow:hidden;">
+        <div class="panel-label">02 / Network Graph</div>
+        <h2 class="panel-title">Transaction Network</h2>
+        <div class="graph-controls">
+          <button class="ctrl-btn active" id="layoutCose">Force Layout</button>
+          <button class="ctrl-btn" id="layoutCircle">Circle Layout</button>
+          <button class="ctrl-btn" id="layoutGrid">Grid Layout</button>
+          <button class="ctrl-btn" id="layoutAdjList">Adjacency List</button>
+          <button class="ctrl-btn expand-btn" id="expandGraph" title="Expand graph to fullscreen">⛶ Expand</button>
+          <div class="graph-legend">
+            <div class="legend-item" data-filter="normal"><span class="legend-dot normal"></span><span>Normal</span></div>
+            <div class="legend-item" data-filter="suspicious"><span class="legend-dot suspicious"></span><span>Suspicious</span></div>
+            <div class="legend-item" data-filter="ring"><span class="legend-dot ring"></span><span>Ring Member</span></div>
+          </div>
+        </div>
+        <div id="cy" class="cy-container"></div>
+        <div id="adjListView" class="adj-list-view" style="display:none;"></div>
+        <div id="accountDetailPanel"></div>
+      </section>
+
+      <section class="panel accounts-panel">
+        <div class="panel-label">03 / Suspicious Accounts</div>
+        <h2 class="panel-title">Flagged Accounts</h2>
+        <div class="table-wrapper">
+          <table class="data-table" id="accountsTable">
+            <thead><tr><th>Account</th><th>Score</th><th>Patterns</th><th>Ring</th></tr></thead>
+            <tbody id="accountsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel rings-panel">
+        <div class="panel-label">04 / Fraud Rings</div>
+        <h2 class="panel-title">Detected Rings</h2>
+        <div id="ringsContainer"></div>
+      </section>
+    </div>
+
+    <section class="export-section" id="exportSection" style="display:none;">
+      <div class="export-inner">
+        <div class="export-text">
+          <div class="export-title">Export Forensic Report</div>
+          <div class="export-sub">Download full analysis as structured JSON</div>
+        </div>
+        <button class="btn-primary" id="downloadBtn">⬇ Download JSON Report</button>
+      </div>
+    </section>
+
+    <section class="summary-trigger-section" id="summarySection" style="display:none;">
+      <button class="summary-open-btn" id="openSummaryBtn">
+        <span class="summary-btn-icon">◈</span>
+        <div class="summary-btn-text">
+          <span class="summary-btn-title">View Transaction &amp; Fraud Summary</span>
+          <span class="summary-btn-sub">05 / Forensic Summary — Full analysis report</span>
+        </div>
+        <span class="summary-btn-arrow">→</span>
+      </button>
+    </section>
+
+    <!-- Summary Modal -->
+    <div class="summary-modal-backdrop" id="summaryModalBackdrop" style="display:none;">
+      <div class="summary-modal" id="summaryModal">
+        <div class="summary-modal-header">
+          <div class="summary-modal-title-block">
+            <span class="logo-icon" style="font-size:18px;">◈</span>
+            <div>
+              <div class="summary-modal-title">Transaction &amp; Fraud Summary</div>
+              <div class="summary-modal-sub">05 / Forensic Summary</div>
+            </div>
+          </div>
+          <button class="summary-modal-close" id="closeSummaryBtn">✕</button>
+        </div>
+        <div class="summary-modal-body">
+          <div class="summary-grid" id="summaryGrid"></div>
+        </div>
+      </div>
+    </div>
+
+  <div id="graphOverlay" class="graph-overlay" style="display:none;">
+    <div class="overlay-header">
+      <div class="overlay-title-block">
+        <span class="logo-icon">◈</span>
+        <span class="overlay-title">Transaction Network — Expanded View</span>
+      </div>
+      <div class="overlay-controls">
+        <button class="ctrl-btn active" id="ovLayoutCose">Force Layout</button>
+        <button class="ctrl-btn" id="ovLayoutCircle">Circle Layout</button>
+        <button class="ctrl-btn" id="ovLayoutGrid">Grid Layout</button>
+        <button class="ctrl-btn" id="ovLayoutAdjList">Adjacency List</button>
+        <div class="overlay-divider"></div>
+        <div class="graph-legend overlay-legend">
+          <div class="legend-item" data-filter="normal" data-overlay-filter><span class="legend-dot normal"></span><span>Normal</span></div>
+          <div class="legend-item" data-filter="suspicious" data-overlay-filter><span class="legend-dot suspicious"></span><span>Suspicious</span></div>
+          <div class="legend-item" data-filter="ring" data-overlay-filter><span class="legend-dot ring"></span><span>Ring Member</span></div>
+        </div>
+        <div class="overlay-divider"></div>
+        <button class="ctrl-btn expand-btn" id="collapseGraph">✕ Close</button>
+      </div>
+    </div>
+    <div style="position:relative; flex:1; display:flex; flex-direction:column;">
+      <div id="cyOverlay" class="cy-overlay-container"></div>
+      <div id="adjListViewOverlay" class="adj-list-view" style="display:none;position:absolute;inset:0;z-index:5;"></div>
+      <div id="accountDetailPanelOverlay"></div>
     </div>
   </div>
 
-  <div class="info-container">
-    <div class="info-card">
-      <h3>The Anatomy of a Mule</h3>
-      <p>Money mulling is a sophisticated laundering tactic where legitimate bank accounts are "rented" by criminal syndicates.</p>
-    </div>
-    <div class="info-card">
-      <h3>Digital Smurfing</h3>
-      <p>Syndicates split large sums into small transactions. MuleTrace uses graph theory to reconnect these fragments.</p>
-    </div>
+  </main>
 
-    <div class="stats-bar-landing">
-      <div class="stat-fact"><span class="stat-fact-val">$2.4T</span><span class="stat-fact-label">Est. Laundering</span></div>
-      <div class="stat-fact"><span class="stat-fact-val">100k+</span><span class="stat-fact-label">Active Mules</span></div>
-      <div class="stat-fact"><span class="stat-fact-val">84%</span><span class="stat-fact-label">Social Recruitment</span></div>
-      <div class="stat-fact"><span class="stat-fact-val">2.5s</span><span class="stat-fact-label">Txn Velocity</span></div>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-brand-name">
+            <span class="logo-icon">◈</span>
+            Financial Forensics Engine
+          </div>
+          <div class="footer-brand-desc">
+            Client-side transaction analysis and fraud ring detection.<br>
+            All computation runs locally — no data leaves your browser.
+          </div>
+        </div>
+        <div class="footer-status-block">
+          <div class="footer-status-label">System Clock</div>
+          <div class="footer-clock" id="footerClock">00:00:00</div>
+          <div class="footer-date" id="footerDate">—</div>
+          <div class="footer-security-badge">Secure · Local Only</div>
+        </div>
+        <div class="footer-links">
+          <div class="footer-link-group-label">Detection Thresholds</div>
+          <div class="footer-stat-row">
+            <div class="footer-mini-stat"><div class="footer-mini-stat-val">3–5</div><div class="footer-mini-stat-label">Cycle<br>Length</div></div>
+            <div class="footer-stat-divider"></div>
+            <div class="footer-mini-stat"><div class="footer-mini-stat-val">10</div><div class="footer-mini-stat-label">Fan<br>Threshold</div></div>
+            <div class="footer-stat-divider"></div>
+            <div class="footer-mini-stat"><div class="footer-mini-stat-val">72h</div><div class="footer-mini-stat-label">Window<br>Size</div></div>
+            <div class="footer-stat-divider"></div>
+            <div class="footer-mini-stat"><div class="footer-mini-stat-val">5/h</div><div class="footer-mini-stat-label">Velocity<br>Limit</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-copy">© RIFT 2026 Hackathon · Financial Forensics Engine</div>
+        <div class="footer-tags">
+          <span class="footer-tag highlight">✓ No Server</span>
+          <span class="footer-tag">Cytoscape.js</span>
+          <span class="footer-tag">PapaParse</span>
+          <span class="footer-tag">Union-Find Rings</span>
+          <span class="footer-tag">DFS Cycles</span>
+          <span class="footer-tag">Smurfing Detection</span>
+          <span class="footer-tag highlight">⊠ Evidence Vault</span>
+        </div>
+      </div>
     </div>
+  </footer>
 
-    <div class="initialize-box">
-      <button class="enter-btn" onclick="startEngine()">INITIATE FORENSICS →</button>
-    </div>
-  </div>
-
+  <script src="app.js"></script>
   <script>
-    function startEngine() {
-      // 1. Show the loader overlay
-      document.getElementById('loaderOverlay').style.display = 'flex';
-      
-      // 2. Short artificial delay for a "secure handshake" feel
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 2000); 
+    function updateClock() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('footerClock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      document.getElementById('footerDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase();
     }
+    updateClock();
+    setInterval(updateClock, 1000);
   </script>
 </body>
 </html>
